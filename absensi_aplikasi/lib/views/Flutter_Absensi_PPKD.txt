@@ -1,0 +1,41 @@
+﻿Assessment Flutter Absensi 
+Studi Kasus: Pengembangan Aplikasi Absensi (ABSENSI PPKD)
+Platform: Flutter + REST API
+Tanggal: 2 Juli 2026
+Instruksi Umum
+1. Bacalah setiap instruksi dengan seksama sebelum memulai.
+2. Gunakan framework Flutter dan konsumsi API sesuai dokumentasi yang diberikan melalui Postman Collection dan referensi UI dari Figma.
+3. Buat dalam file flutter baru
+4. Perhatikan Clean Arsitektur dan Clean Code
+5. Semua data autentikasi dan absensi harus berkomunikasi dengan REST API.
+6. Simpan data penting (seperti token autentikasi) secara lokal menggunakan SharedPreferences.
+7. Tunjukkan pemahaman terhadap struktur kode yang rapi, validasi, dan penggunaan state management sederhana (boleh setState, provider, atau bloc).
+Tugas yang Harus Dikerjakan
+1. Autentikasi Pengguna
+1.1. Buat halaman Register dengan input: nama, email, batch, training berdasarkan id training dan password. Kirimkan ke endpoint POST /register. Simpan token ke SharedPreferences.
+1.2. Buat halaman Login dengan input email dan password. Kirim ke POST /login. Jika berhasil, simpan token dan arahkan ke Dashboard.
+2. Dashboard Absensi
+2.1. Tampilkan nama pengguna dan tanggal hari ini  (Boleh ditambahkan greeting)
+2.2. Buat dua tombol atau 2 halaman atau boleh 1 halamn 2 function:
+- Absen Masuk: POST /absen-check-in
+- Absen Pulang: POST /absen-check-out
+2.3. Gunakan Geolocator untuk mengambil latitude & longitude dan kirim
+2.4 Menampilkan google map untuk lokasi (Boleh di halaman detail)
+2.5 Menampilkan statistik absen dan absen hari ini
+3. Riwayat Absensi
+3.1. Ambil dan tampilkan data dari endpoint GET /history-absen.
+3.2. Tampilkan tanggal, jam masuk/keluar, dan lokasi.
+4. Profil Pengguna
+4.1. Tampilkan data dari endpoint GET /profile.
+4.2. Buat form edit nama/email, kirim ke PUT /edit-profile.
+5. Fitur Tambahan (Bonus)
+5.1. Tombol Logout: hapus token dan arahkan ke login.
+5.2. Tombol Hapus Absen: DELETE /delete-absen?id=...
+5.3. Tambahkan fitur Dark Mode / Light Mode dengan preferensi disimpan di SharedPreferences.
+
+Link Postman
+https://drive.google.com/file/d/1_QNZ-d8HwihntMzQ4PXHNqNxyJ15WuMz/view?usp=sharing
+Link Figma sebagai referensi desain
+https://www.figma.com/design/GheFokv6sVoKqtY4k2lt9x/Absensi-PPKD?node-id=0-1&t=dWhq4ny9sKbr4lpr-1
+Link URL
+https://appabsensi.mobileprojp.com
