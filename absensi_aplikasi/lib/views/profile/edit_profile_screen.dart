@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/theme_provider.dart';
-import '../auth/login_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -28,7 +27,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     Future.delayed(Duration.zero, () async {
       if (mounted) {
         final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
-        await profileProvider.fetchProfile();
+        // Hanya fetch jika profil belum dimuat, agar tidak menimpa foto yang baru di-upload
+        if (profileProvider.profile == null) {
+          await profileProvider.fetchProfile();
+        }
         if (mounted && profileProvider.profile != null) {
           _nameController.text = profileProvider.profile!.name;
           _emailController.text = profileProvider.profile!.email;
@@ -97,17 +99,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _logout() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
-
     await authProvider.logout();
-    profileProvider.clearProfile();
-
-    if (mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
-    }
   }
 
   @override
@@ -148,6 +140,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           backgroundImage: user?.profilePhoto != null && user!.profilePhoto!.isNotEmpty
                               ? NetworkImage(user.profilePhoto!)
                               : null,
+                          onBackgroundImageError: (exception, stackTrace) {
+                            debugPrint('Gagal memuat foto profil: $exception');
+                          },
                           child: user?.profilePhoto == null || user!.profilePhoto!.isEmpty
                               ? Icon(Icons.person, size: 64, color: Colors.grey[600])
                               : null,

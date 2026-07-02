@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+
 import 'providers/attendance_provider.dart';
+import 'providers/auth_provider.dart';
 import 'providers/profile_provider.dart';
 import 'providers/theme_provider.dart';
 import 'views/auth/login_screen.dart';
@@ -70,11 +71,48 @@ class _AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<_AuthGate> {
   bool _isChecking = true;
+  AuthProvider? _authProvider;
+  bool? _wasAuthenticated;
 
   @override
   void initState() {
     super.initState();
     _initAutoLogin();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final authProvider = Provider.of<AuthProvider>(context);
+    if (_authProvider != authProvider) {
+      _authProvider?.removeListener(_onAuthChanged);
+      _authProvider = authProvider;
+      _authProvider?.addListener(_onAuthChanged);
+      _wasAuthenticated = authProvider.isAuthenticated;
+    }
+  }
+
+  @override
+  void dispose() {
+    _authProvider?.removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (_authProvider != null) {
+      final currentAuth = _authProvider!.isAuthenticated;
+      // Only execute clear & pop when user goes from logged-in (true) to logged-out (false)
+      if (_wasAuthenticated == true && currentAuth == false) {
+        Provider.of<ProfileProvider>(context, listen: false).clearProfile();
+        Provider.of<AttendanceProvider>(context, listen: false).clearState();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
+        });
+      }
+      _wasAuthenticated = currentAuth;
+    }
   }
 
   Future<void> _initAutoLogin() async {
@@ -94,12 +132,12 @@ class _AuthGateState extends State<_AuthGate> {
   @override
   Widget build(BuildContext context) {
     if (_isChecking) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final authProvider = Provider.of<AuthProvider>(context);
-    return authProvider.isAuthenticated ? const MainNavigation() : const LoginScreen();
+    return authProvider.isAuthenticated
+        ? const MainNavigation()
+        : const LoginScreen();
   }
 }

@@ -207,8 +207,12 @@ class AttendanceService {
 }
 ```
 
-### Langkah 4.5: Mengedit Foto Profil dengan Multipart/Form-Data (`services/profile_service.dart`)
+### Langkah 4.5: Mengedit Foto Profil dengan Base64 Encoding (`services/profile_service.dart`)
+> [!NOTE]
+> API server mengharapkan foto profil dikirim dalam format Base64 Data URI (bukan Multipart/Form-Data). Sesuaikan dengan spesifikasi Postman Collection.
+
 ```dart
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'api_client.dart';
@@ -216,24 +220,27 @@ import 'api_client.dart';
 class ProfileService {
   final ApiClient _client = ApiClient();
 
-  Future<bool> updateProfilePhoto(File imageFile) async {
+  Future<String> uploadPhoto(File imageFile) async {
     try {
-      String fileName = imageFile.path.split('/').last;
-      FormData formData = FormData.fromMap({
-        "profile_photo": await MultipartFile.fromFile(
-          imageFile.path,
-          filename: fileName,
-        ),
-      });
+      final bytes = await imageFile.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      String extension = imageFile.path.split('.').last.toLowerCase();
+      if (extension == 'jpg') extension = 'jpeg';
+      final base64String = 'data:image/$extension;base64,$base64Image';
 
       final response = await _client.dio.put(
         '/api/profile/photo',
-        data: formData,
+        data: {
+          'profile_photo': base64String,
+        },
       );
 
-      return response.statusCode == 200;
-    } catch (e) {
-      rethrow;
+      final data = response.data['data'] ?? response.data;
+      return data['profile_photo'] ?? '';
+    } on DioException catch (e) {
+      final message = e.response?.data['message'] ?? 'Failed to upload photo';
+      throw Exception(message);
     }
   }
 }

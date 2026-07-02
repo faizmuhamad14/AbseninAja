@@ -1,3 +1,5 @@
+import '../constant/app_constant.dart';
+
 class UserModel {
   final int id;
   final String name;
@@ -24,12 +26,39 @@ class UserModel {
     
     String trimmed = url.trim();
     
-    if (trimmed.contains('127.0.0.1:8000')) {
-      trimmed = trimmed.replaceAll('http://127.0.0.1:8000', 'https://appabsensi.mobileprojp.com');
-    } else if (trimmed.contains('localhost:8000')) {
-      trimmed = trimmed.replaceAll('http://localhost:8000', 'https://appabsensi.mobileprojp.com');
-    } else if (trimmed.startsWith('/')) {
-      trimmed = 'https://appabsensi.mobileprojp.com$trimmed';
+    // Extract relative path starting with /public/, /storage/, or /profile_photo/ if present
+    int index = trimmed.indexOf('/public/');
+    if (index == -1) index = trimmed.indexOf('public/');
+    if (index == -1) index = trimmed.indexOf('/storage/');
+    if (index == -1) index = trimmed.indexOf('storage/');
+    if (index == -1) index = trimmed.indexOf('/profile_photo/');
+    if (index == -1) index = trimmed.indexOf('profile_photo/');
+    
+    if (index != -1) {
+      trimmed = trimmed.substring(index);
+      if (!trimmed.startsWith('/')) {
+        trimmed = '/$trimmed';
+      }
+    }
+    
+    // Normalize localhost / 127.0.0.1 (with or without port, http or https) to AppConstant.baseUrl
+    final regexLocalhost = RegExp(r'https?://(?:localhost|127\.0\.0\.1)(?::\d+)?');
+    if (regexLocalhost.hasMatch(trimmed)) {
+      trimmed = trimmed.replaceFirst(regexLocalhost, AppConstant.baseUrl);
+    }
+    
+    // Prepend AppConstant.baseUrl if it's a relative path starting with /
+    if (trimmed.startsWith('/')) {
+      String baseUrl = AppConstant.baseUrl;
+      if (baseUrl.endsWith('/')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 1);
+      }
+      trimmed = '$baseUrl$trimmed';
+    }
+    
+    // Ensure scheme is https if base URL uses https and URL starts with http://
+    if (AppConstant.baseUrl.startsWith('https://') && trimmed.startsWith('http://')) {
+      trimmed = trimmed.replaceFirst('http://', 'https://');
     }
     
     return trimmed;

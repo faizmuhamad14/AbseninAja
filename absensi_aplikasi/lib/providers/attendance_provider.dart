@@ -188,4 +188,12 @@ class AttendanceProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void clearState() {
+    _todayAttendance = null;
+    _history = [];
+    _stats = AttendanceStats(hadir: 0, izin: 0, sakit: 0, alpa: 0);
+    _statusMessage = '';
+    notifyListeners();
+  }
 }

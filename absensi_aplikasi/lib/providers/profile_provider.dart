@@ -12,24 +12,56 @@ class ProfileProvider with ChangeNotifier {
   UserModel? get profile => _profile;
   bool get isLoading => _isLoading;
 
+  /// Helper: membaca URL foto profil dari SharedPreferences sebagai fallback
+  Future<String?> _getLocalPhotoUrl(String email) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('profile_photo_$email');
+    } catch (e) {
+      debugPrint('Failed to load local profile photo: $e');
+      return null;
+    }
+  }
+
+  /// Helper: menyimpan URL foto profil ke SharedPreferences
+  Future<void> _saveLocalPhotoUrl(String? url, String email) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (url != null && url.isNotEmpty) {
+        await prefs.setString('profile_photo_$email', url);
+      }
+    } catch (e) {
+      debugPrint('Failed to save local profile photo: $e');
+    }
+  }
+
+  /// Memilih URL foto terbaik: prioritaskan server, fallback ke lokal, lalu in-memory
+  String? _resolvePhotoUrl(String? serverPhoto, String? localPhoto) {
+    if (serverPhoto != null && serverPhoto.trim().isNotEmpty) {
+      return serverPhoto;
+    }
+    // Gunakan foto yang sudah ada di memory (dari upload sebelumnya)
+    if (_profile?.profilePhoto != null && _profile!.profilePhoto!.trim().isNotEmpty) {
+      return _profile!.profilePhoto;
+    }
+    // Terakhir, fallback ke SharedPreferences
+    return localPhoto;
+  }
+
   Future<void> fetchProfile() async {
     _isLoading = true;
     notifyListeners();
     try {
       final fetchedProfile = await _profileService.getProfile();
-      
-      // Load saved photo url if server returned null/empty or is missing it
-      String? localPhotoUrl;
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        localPhotoUrl = prefs.getString('profile_photo');
-      } catch (prefError) {
-        debugPrint('Failed to load local profile photo: $prefError');
-      }
 
-      final String? photoUrl = (fetchedProfile.profilePhoto != null && fetchedProfile.profilePhoto!.trim().isNotEmpty)
-          ? fetchedProfile.profilePhoto
-          : localPhotoUrl;
+      // Load saved photo url jika server mengembalikan null/kosong
+      final localPhotoUrl = await _getLocalPhotoUrl(fetchedProfile.email);
+      final photoUrl = _resolvePhotoUrl(fetchedProfile.profilePhoto, localPhotoUrl);
+
+      // Jika foto ditemukan dari server, simpan ke lokal untuk backup
+      if (fetchedProfile.profilePhoto != null && fetchedProfile.profilePhoto!.trim().isNotEmpty) {
+        await _saveLocalPhotoUrl(fetchedProfile.profilePhoto, fetchedProfile.email);
+      }
 
       _profile = UserModel(
         id: fetchedProfile.id,
@@ -54,19 +86,13 @@ class ProfileProvider with ChangeNotifier {
     notifyListeners();
     try {
       final updatedProfile = await _profileService.updateProfile(name: name, email: email);
-      
-      // Load saved photo url from local storage
-      String? localPhotoUrl;
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        localPhotoUrl = prefs.getString('profile_photo');
-      } catch (prefError) {
-        debugPrint('Failed to load local profile photo: $prefError');
-      }
 
-      final String? photoUrl = (_profile?.profilePhoto != null && _profile!.profilePhoto!.trim().isNotEmpty)
-          ? _profile!.profilePhoto
-          : localPhotoUrl;
+      // Foto tidak diubah di endpoint ini (hanya nama & email),
+      // jadi prioritaskan foto yang sudah ada di memori → lokal → server
+      final localPhotoUrl = await _getLocalPhotoUrl(updatedProfile.email);
+      final photoUrl = _profile?.profilePhoto
+          ?? localPhotoUrl
+          ?? updatedProfile.profilePhoto;
 
       _profile = UserModel(
         id: updatedProfile.id,
@@ -91,23 +117,21 @@ class ProfileProvider with ChangeNotifier {
     notifyListeners();
     try {
       final photoUrl = await _profileService.uploadPhoto(file);
-      
-      // Save photo url locally in SharedPreferences
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        if (photoUrl.isNotEmpty) {
-          await prefs.setString('profile_photo', photoUrl);
-        }
-      } catch (prefError) {
-        debugPrint('Failed to save profile photo locally: $prefError');
+
+      // Simpan URL foto ke SharedPreferences sebagai backup
+      if (_profile != null) {
+        await _saveLocalPhotoUrl(photoUrl, _profile!.email);
       }
 
       if (_profile != null) {
+        // Jika server mengembalikan URL kosong, pertahankan foto sebelumnya
+        final effectiveUrl = (photoUrl.isNotEmpty) ? photoUrl : _profile!.profilePhoto;
+
         _profile = UserModel(
           id: _profile!.id,
           name: _profile!.name,
           email: _profile!.email,
-          profilePhoto: photoUrl,
+          profilePhoto: effectiveUrl,
           batchId: _profile!.batchId,
           trainingId: _profile!.trainingId,
           batchName: _profile!.batchName,
@@ -122,14 +146,8 @@ class ProfileProvider with ChangeNotifier {
     }
   }
 
-  void clearProfile() async {
+  void clearProfile() {
     _profile = null;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('profile_photo');
-    } catch (prefError) {
-      debugPrint('Failed to clear local profile photo: $prefError');
-    }
     notifyListeners();
   }
 }

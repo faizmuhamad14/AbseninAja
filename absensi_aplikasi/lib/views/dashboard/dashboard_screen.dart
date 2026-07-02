@@ -20,7 +20,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     Future.delayed(Duration.zero, () {
       if (mounted) {
-        Provider.of<ProfileProvider>(context, listen: false).fetchProfile();
+        // Hanya fetch jika profil belum dimuat, agar tidak menimpa foto yang baru di-upload
+        final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
+        if (profileProvider.profile == null) {
+          profileProvider.fetchProfile();
+        }
         Provider.of<AttendanceProvider>(
           context,
           listen: false,
