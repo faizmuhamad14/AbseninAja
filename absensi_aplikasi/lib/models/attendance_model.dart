@@ -29,6 +29,13 @@ class AttendanceModel {
     required this.attendanceDate,
   });
 
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
   factory AttendanceModel.fromJson(Map<String, dynamic> json) {
     return AttendanceModel(
       id: json['id'] is int ? json['id'] : (int.tryParse(json['id']?.toString() ?? '') ?? 0),
@@ -39,10 +46,10 @@ class AttendanceModel {
           : null,
       checkInTime: json['check_in_time'],
       checkOutTime: json['check_out_time'],
-      checkInLat: json['check_in_lat'] != null ? double.tryParse(json['check_in_lat'].toString()) : null,
-      checkInLng: json['check_in_lng'] != null ? double.tryParse(json['check_in_lng'].toString()) : null,
-      checkOutLat: json['check_out_lat'] != null ? double.tryParse(json['check_out_lat'].toString()) : null,
-      checkOutLng: json['check_out_lng'] != null ? double.tryParse(json['check_out_lng'].toString()) : null,
+      checkInLat: _parseDouble(json['check_in_lat']),
+      checkInLng: _parseDouble(json['check_in_lng']),
+      checkOutLat: _parseDouble(json['check_out_lat']),
+      checkOutLng: _parseDouble(json['check_out_lng']),
       checkInAddress: json['check_in_address'],
       checkOutAddress: json['check_out_address'],
       status: json['status'] ?? 'masuk',

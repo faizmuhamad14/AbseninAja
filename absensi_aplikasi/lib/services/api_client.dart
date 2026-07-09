@@ -26,6 +26,8 @@ class ApiClient {
         return handler.next(options);
       },
       onError: (DioException e, handler) {
+        // Tambahkan print log untuk melihat detail error API
+        print('API CLIENT ERROR [${e.requestOptions.path}]: Status ${e.response?.statusCode}, Data: ${e.response?.data}');
         if (e.response?.statusCode == 401) {
           onUnauthorized?.call();
         }

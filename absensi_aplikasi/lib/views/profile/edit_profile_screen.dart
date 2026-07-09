@@ -140,9 +140,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           backgroundImage: user?.profilePhoto != null && user!.profilePhoto!.isNotEmpty
                               ? NetworkImage(user.profilePhoto!)
                               : null,
-                          onBackgroundImageError: (exception, stackTrace) {
-                            debugPrint('Gagal memuat foto profil: $exception');
-                          },
+                          onBackgroundImageError: user?.profilePhoto != null && user!.profilePhoto!.isNotEmpty
+                              ? (exception, stackTrace) {
+                                  debugPrint('Gagal memuat foto profil: $exception');
+                                }
+                              : null,
                           child: user?.profilePhoto == null || user!.profilePhoto!.isEmpty
                               ? Icon(Icons.person, size: 64, color: Colors.grey[600])
                               : null,

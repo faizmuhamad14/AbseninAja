@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
-import '../services/auth_service.dart';
+import '../services/firebase_auth_service.dart';
 import '../services/api_client.dart';
 import '../services/attendance_service.dart';
 
 class AuthProvider with ChangeNotifier {
-  final AuthService _authService = AuthService();
+  final FirebaseAuthService _authService = FirebaseAuthService();
   final AttendanceService _attendanceService = AttendanceService();
   String? _token;
   bool _isLoading = false;
@@ -101,6 +101,11 @@ class AuthProvider with ChangeNotifier {
     _token = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    try {
+      await _authService.logout();
+    } catch (e) {
+      debugPrint('Failed to log out from Firebase: $e');
+    }
     notifyListeners();
   }
 

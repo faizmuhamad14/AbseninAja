@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "303183446117",
+    "project_id": "absenin-aja-project",
+    "storage_bucket": "absenin-aja-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:303183446117:android:35792da290047f54c4068c",
+        "android_client_info": {
+          "package_name": "com.example.absensi_aplikasi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCM555XikSBxIgx4nd3q9oV7-Vl7hdTh28"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -18,9 +18,11 @@ class AttendanceProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String get statusMessage => _statusMessage;
 
-  Future<void> fetchTodayAttendance() async {
-    _isLoading = true;
-    notifyListeners();
+  Future<void> fetchTodayAttendance({bool forceLoading = false}) async {
+    if (_todayAttendance == null || forceLoading) {
+      _isLoading = true;
+      notifyListeners();
+    }
     try {
       _todayAttendance = await _service.getTodayAttendance();
     } catch (e) {
@@ -31,9 +33,11 @@ class AttendanceProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchHistoryAndStats() async {
-    _isLoading = true;
-    notifyListeners();
+  Future<void> fetchHistoryAndStats({bool forceLoading = false}) async {
+    if (_history.isEmpty || forceLoading) {
+      _isLoading = true;
+      notifyListeners();
+    }
     try {
       _history = await _service.getHistory();
       _stats = await _service.getStats();
